@@ -2,7 +2,7 @@
 
 import express from 'express';
 
-import modelFinder from '../middleware/model-finder.js';
+import notes from '../models/notes.js';
 
 const router = express.Router();
 
@@ -14,10 +14,12 @@ let sendJSON = (data,response) => {
   response.end();
 };
 
-router.param('model', modelFinder);
+router.get('/api/v1/notes/schema', (request, response) => {
+  sendJSON(notes.schema(), response);
+});
 
-router.get('/api/v1/:model', (request,response,next) => {
-  request.model.find()
+router.get('/api/v1/notes', (request,response,next) => {
+  notes.find()
     .then( data => {
       const output = {
         count: data.length,
@@ -28,32 +30,34 @@ router.get('/api/v1/:model', (request,response,next) => {
     .catch( next );
 });
 
-router.get('/api/v1/:model/:id', (request,response,next) => {
-  request.model.find({_id:request.params.id})
+router.get('/api/v1/notes/:id', (request,response,next) => {
+  notes.find({_id:request.params.id})
     .then( result => sendJSON(result, response) )
     .catch( next );
 });
 
-router.post('/api/v1/:model', (request,response,next) => {
-  request.model.save(request.body)
+router.post('/api/v1/notes', (request,response,next) => {
+  let note = new notes(request.body);
+  note.save()
     .then( result => sendJSON(result, response) )
     .catch( next );
 });
 
-router.put('/api/v1/:model/:id', (request,response,next) => {
-  request.model.save(request.params.id, request.body)
+router.put('/api/v1/notes/:id', (request,response,next) => {
+  request.body._id = request.params.id; // JIC
+  notes.findByIdAndUpdate(request.params.id, request.body)
     .then( result => sendJSON(result, response) )
     .catch( next );
 });
 
-router.patch('/api/v1/:model/:id', (request,response,next) => {
-  request.model.patch(request.params.id, request.body)
+router.patch('/api/v1/notes/:id', (request,response,next) => {
+  notes.findByIdAndUpdate(request.params.id, request.body)
     .then( result => sendJSON(result, response) )
     .catch( next );
 });
 
-router.delete('/api/v1/:model/:id', (request,response,next) => {
-  request.model.delete(request.params.id)
+router.delete('/api/v1/notes/:id', (request,response,next) => {
+  notes.findByIdAndRemove(request.params.id)
     .then( result => sendJSON(result, response) )
     .catch( next );
 });
